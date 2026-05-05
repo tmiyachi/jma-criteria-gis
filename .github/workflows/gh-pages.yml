@@ -45,6 +45,7 @@ jobs:
 
       - name: Download table
         run: scripts/00_download_csv.sh
+        timeout-minutes: 30
 
       - name: Generate data
         run: |
@@ -70,7 +71,7 @@ jobs:
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
-        if: ${{ github.ref == 'refs/heads/dev' }}
+        if: ${{ github.ref == 'refs/heads/main' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./sample/dist
