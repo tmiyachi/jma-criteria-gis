@@ -1,0 +1,45 @@
+{
+  "name": "jma-criteria-gis",
+  "version": "1.0.0",
+  "description": "Sample page using vector tiles processed from JMA Warning & Advisory criteria GIS",
+  "main": "index.js",
+  "dependencies": {
+    "maplibre-gl": "^5.24.0",
+    "pmtiles": "^4.4.1"
+  },
+  "devDependencies": {
+    "eslint": "^9.22.0",
+    "eslint-cli": "^1.1.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.4.0",
+    "html-webpack-plugin": "^5.6.7",
+    "mini-css-extract-plugin": "^2.10.2",
+    "npm-run-all2": "^8.0.4",
+    "postcss": "^8.5.8",
+    "postcss-scss": "^4.0.9",
+    "prettier": "^3.8.3",
+    "sass": "^1.99.0",
+    "sass-loader": "^16.0.7",
+    "stylelint": "^17.6.0",
+    "stylelint-config-recess-order": "^7.7.0",
+    "stylelint-config-recommended-scss": "^17.0.1",
+    "stylelint-scss": "^7.0.0",
+    "vite": "^8.0.10"
+  },
+  "scripts": {
+    "build": "vite build --config sample/vite.config.mjs",
+    "start": "vite dev --config sample/vite.config.mjs",
+    "lint:eslint": "eslint sample/src/**/*.js --config sample/eslint.config.mjs",
+    "lint:stylelint": "stylelint sample/src/**/*.css --config sample/stylelint.config.mjs",
+    "lint:prettier": "prettier sample/src/**/*.{js,css} --check --config sample/prettier.config.mjs",
+    "lint": "run-p lint:*",
+    "fix:eslint": "npm run lint:eslint -- --fix",
+    "fix:stylelint": "npm run lint:stylelint -- --fix",
+    "fix:prettier": "npm run lint:prettier -- --write",
+    "fix": "run-s fix:*"
+  },
+  "private": true,
+  "keywords": [],
+  "author": "tmiyachi",
+  "license": "MIT"
+}

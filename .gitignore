@@ -1,0 +1,12 @@
+__pycache__/
+*.py[codz]
+*$py.class
+
+.venv
+venv/
+
+node_modules/
+
+.vscode/
+
+sample/dist

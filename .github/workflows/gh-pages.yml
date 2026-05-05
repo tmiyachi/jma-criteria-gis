@@ -1,0 +1,76 @@
+name: GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    concurrency:
+      group: ${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Cache downloaded tables
+        id: cache-table
+        uses: actions/cache@v4
+        with:
+          path: table/
+          key: ${{ runner.os }}-table-${{ hashFiles('scripts/00_download_csv.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-table-
+
+      - name: Download table
+        run: scripts/00_download_csv.sh
+
+      - name: Generate data
+        run: |
+          python scripts/01_make_geojson_rainri.py
+          python scripts/01_make_geojson_rainsri.py
+          python scripts/01_make_geojson_soil.py
+
+      - name: Generate tiles
+        run: |
+          scripts/02_make_tiles.sh
+
+      - name: Build demo pages
+        run: |
+          npm ci
+          npm run build
+
+      - name: Copy data and tiles
+        run: |
+          mkdir -p sample/dist/tiles
+          mkdir -p sample/dist/data
+          cp tiles/*.pmtiles tiles/*.json sample/dist/tiles/
+          cp -r data/* sample/dist/data/
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v4
+        if: ${{ github.ref == 'refs/heads/dev' }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./sample/dist
