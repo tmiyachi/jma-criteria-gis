@@ -2,7 +2,6 @@
  * 土砂災害基準グラフ
  */
 import * as d3 from 'd3';
-import { fetchSoilMs3 } from '@/service';
 
 const CHART_CONFIG = [
   { level: 'lv2', color: '#f2e700' },
@@ -35,7 +34,7 @@ export class SoilCriteriaLineChart {
       .range([this.margin.left, this.width - this.margin.right]);
     this.yScale = d3
       .scaleLinear()
-      .domain([0, 160]) // 1時間雨量0~160ミリ
+      .domain([0, 155]) // 1時間雨量0~150ミリ
       .range([this.height - this.margin.bottom, this.margin.top]);
     // 軸
     this.svg
@@ -83,15 +82,19 @@ export class SoilCriteriaLineChart {
     });
   }
 
-  async update(ms3) {
-    if (!ms3) {
+  async update(criteria) {
+    if (!criteria) {
       this.svg.style('display', 'none'); // 空データの場合は隠す
       return;
     }
 
     // 基準値取得
-    const criteria = await fetchSoilMs3(ms3);
-    if (!criteria) {
+    const decodedCriteria = Object.entries(criteria).reduce((acc, [k, v]) => {
+      acc[k] = typeof v === 'string' ? decodeFromRLE(v) : v;
+      return acc;
+    }, {});
+
+    if (!decodedCriteria) {
       this.svg.style('display', 'none');
       return;
     }
@@ -100,7 +103,7 @@ export class SoilCriteriaLineChart {
 
     // 横軸スケールの調整 (土壌雨量指数300を最小とする)
     const allValues = CHART_CONFIG.flatMap(
-      (c) => criteria[c.level] || [],
+      (c) => decodedCriteria[c.level] || [],
     ).filter((v) => v != null);
     const dataMax = allValues.length > 0 ? d3.max(allValues) : 0;
     this.xScale.domain([0, Math.max(300, dataMax)]).nice();
@@ -113,7 +116,7 @@ export class SoilCriteriaLineChart {
 
     // データ更新
     CHART_CONFIG.forEach((config) => {
-      const data = criteria[config.level] || [];
+      const data = decodedCriteria[config.level] || [];
       // パスの更新
       const line = this.svg.select(`.line-${config.level}`);
       const isNew = !line.attr('d');
@@ -126,3 +129,13 @@ export class SoilCriteriaLineChart {
     });
   }
 }
+
+const decodeFromRLE = (rleString) => {
+  if (!rleString) {
+    return [];
+  }
+  return rleString.split(',').flatMap((pair) => {
+    const [val, count] = pair.split(':').map(Number);
+    return Array(count).fill(val);
+  });
+};

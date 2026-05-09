@@ -92,3 +92,31 @@ export const OPTIONS = Object.freeze([
   { text: 'レベル4土砂災害危険警報の基準線面積', value: 'soil,lv4' },
   { text: 'レベル5土砂災害特別警報の基準線面積', value: 'soil,lv5' },
 ]);
+/** 基準値詳細に表示する基準値属性 */
+export const DISPLAY_PROPS_CONFIG = Object.freeze({
+  rainsri: {
+    lv5: 'レベル5',
+    lv4_urgent: 'レベル4(危険警報)',
+    lv4: 'レベル4',
+    lv3: 'レベル3',
+    lv2: 'レベル2',
+  },
+  rainri: {
+    rcode: '河川コード',
+    rname: '河川名',
+    lv5: 'レベル5',
+    lv4_urgent: 'レベル4(危険警報)',
+    lv4: 'レベル4',
+    lv3: 'レベル3',
+    lv3ri: 'レベル3(複合/流域)',
+    lv3sri: 'レベル3(複合/表面)',
+    lv2: 'レベル2',
+    lv2ri: 'レベル2(複合/流域)',
+    lv2sri: 'レベル2(複合/表面)',
+  },
+  soil: {
+    lv5: 'レベル5',
+    lv4: 'レベル4',
+    lv2: 'レベル2',
+  },
+});

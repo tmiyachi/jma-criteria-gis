@@ -104,25 +104,27 @@ def _make_agg_rules(df, by):
     return agg_rules
 
 
+def _clean_dict(row):
+    return {k: v for k, v in row.items() if v != MISSING_VALUE and pd.notna(v)}
+
+
 def make_json():
     """府県予報区の基準値テーブルから、メッシュ単位で階層化したJSON形式で出力する"""
     # 全国分読む
     pref_names = [p.stem.split("_")[-1] for p in TABLE_DIR.glob("**/1_2_*.csv")]
-    df = pd.concat([read_table(p) for p in pref_names], ignore_index=True)
+    df = pd.concat([read_table(p) for p in pref_names], ignore_index=True).drop(
+        columns=["code"]  # ms3をキーにするので不要
+    )
 
     # ファイルサイズを小さくするため1次メッシュ単位で集約する
     df["ms1"] = df["ms3"].str[:4]
+    columns = [c for c in df.columns if c not in ["ms1", "ms3", "code"]]
     for ms1, df_ms1 in df.groupby("ms1"):
-        # 各格子の基準を辞書にまとめる
-        columns = [c for c in df_ms1.columns if c not in ["ms1", "ms3", "code"]]
-        df_ms1["criteria"] = df_ms1[columns].to_dict(orient="records")
-
-        # 3次メッシュ単位でグループ化
-        # ms3とcodeはメッシュで共通（3次メッシュは府県をまたがない）なのでfirstで取得
-        df_ms1 = (
-            df_ms1.groupby("ms3").agg({"code": "first", "criteria": list}).reset_index()
-        )
-        result = df_ms1.to_dict(orient="records")
+        # 各格子の基準をms3をキーとしたリストの辞書にまとめる
+        df_ms1["criteria"] = [
+            _clean_dict(row) for row in df_ms1[columns].to_dict(orient="records")
+        ]
+        result = df_ms1.groupby("ms3")["criteria"].apply(list).to_dict()
 
         json_path = JSON_DIR / "rainri" / f"{ms1}.json"
         if not json_path.parent.exists():

@@ -166,6 +166,23 @@ def make_geojson(mesh, pref_name, geojson_path):
             f.write(json.dumps(feature) + "\n")
 
 
+def encode_rle(lst):
+    if not lst:
+        return ""
+    res = []
+    current_val = lst[0]
+    count = 0
+    for v in lst:
+        if v == current_val:
+            count += 1
+        else:
+            res.append(f"{current_val}:{count}")
+            current_val = v
+            count = 1
+    res.append(f"{current_val}:{count}")
+    return ",".join(res)
+
+
 def make_json():
     """府県予報区の基準値テーブルから、メッシュ単位で階層化したJSON形式で出力する"""
     pref_names = [p.stem.split("_")[-1] for p in TABLE_DIR.glob("**/2_1_*.csv")]
@@ -198,10 +215,15 @@ def make_json():
             .to_dict("records")
         )
         # mergeで欠損になったレベル（Lv2は基準がないがLv5は基準があるような場合）を除く
-        result = [
-            {k: v for k, v in r.items() if isinstance(v, list) or pd.notna(v)}
+        result = {
+            r.pop("ms3"): {
+                # ランレングス圧縮表現の文字列にする
+                k: encode_rle(v)
+                for k, v in r.items()
+                if isinstance(v, list)
+            }
             for r in records
-        ]
+        }
 
         json_path = JSON_DIR / "soil" / f"{ms1}.json"
         if not json_path.parent.exists():

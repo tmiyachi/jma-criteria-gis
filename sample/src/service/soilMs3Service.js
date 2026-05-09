@@ -9,6 +9,7 @@ const pendingRequests = new Map();
  * 3次メッシュ格子の流域雨量指数基準を取得
  */
 export const fetchSoilMs3 = async (ms3) => {
+  if (!ms3) return null;
   const ms1 = ms3.slice(0, 4); // 一次メッシュ単位で分割
 
   if (meshCache.has(ms1)) {
@@ -30,14 +31,9 @@ export const fetchSoilMs3 = async (ms3) => {
       const response = await fetch(url);
       if (!response.ok) throw new Error(`Mesh ${ms1} not found`);
       // ms3をキーにして基準値をマップでキャッシュ
-      const data = await response.json().then((recs) =>
-        recs.reduce(
-          // eslint-disable-next-line no-unused-vars
-          (map, { ms3, code, ...lvs }) => map.set(ms3, lvs),
-          new Map(),
-        ),
-      );
-
+      const data = await response
+        .json()
+        .then((recs) => new Map(Object.entries(recs)));
       // キャッシュ管理
       meshCache.set(ms1, data);
       if (meshCache.size > MAX_CACHE_COUNT) {

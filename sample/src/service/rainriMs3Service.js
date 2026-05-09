@@ -10,6 +10,7 @@ const pendingRequests = new Map();
  * 3次メッシュ格子の流域雨量指数基準を取得
  */
 export const fetchRainRiMs3 = async (ms3) => {
+  if (!ms3) return [];
   const ms1 = ms3.slice(0, 4); // 一次メッシュ単位で分割
 
   if (meshCache.has(ms1)) {
@@ -33,9 +34,7 @@ export const fetchRainRiMs3 = async (ms3) => {
       // ms3をキーにして基準値をマップでキャッシュ
       const data = await response
         .json()
-        .then(
-          (recs) => new Map(recs.map((rec) => [rec['ms3'], rec['criteria']])),
-        );
+        .then((recs) => new Map(Object.entries(recs)));
 
       // キャッシュ管理
       meshCache.set(ms1, data);

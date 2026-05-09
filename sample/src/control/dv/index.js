@@ -3,9 +3,9 @@
  */
 import { debounce } from 'lodash-es';
 
-import { getCityInfoByCityCode, fetchRainRiMs3 } from '@/service';
+import { getCityInfoByCityCode, fetchRainRiMs3, fetchSoilMs3 } from '@/service';
 import { SoilCriteriaLineChart } from './chart';
-import { COLORS, LEVELS, OPTIONS } from '@/constant';
+import { COLORS, LEVELS, OPTIONS, DISPLAY_PROPS_CONFIG } from '@/constant';
 
 export class DataViewerControl {
   constructor() {
@@ -296,23 +296,20 @@ export class DataViewerControl {
       // データ取得中に表示対象の格子が変わっていたら中止
       if (targetMesh !== this.getCurrentHoverMesh()) return;
       html += '<hr>';
-      html += criteria
-        .map((c) => Object.entries(c))
-        .map((entries) => createDetailTable(elem, entries))
-        .join('<hr>');
+      html += criteria.map((d) => createDetailTable(elem, d)).join('<hr>');
     } else {
       // その他の場合はタイルの格子に紐づいたプロパティから地理情報以外を表示
-      const entries = Object.entries(props).filter(
-        ([k, _]) => !['ms2', 'msjma5k', 'ms3', 'code'].includes(k),
-      );
       html += '<hr>';
-      html += createDetailTable(elem, entries);
+      html += createDetailTable(elem, props);
 
       // 土砂の場合はグラフ更新
       if (elem == 'soil') {
-        this.chart.update(props.ms3);
+        const criteria = await fetchSoilMs3(props.ms3);
         // 土砂のデータ取得中に表示対象の格子が変わっていたら中止
-        if (targetMesh !== this.getCurrentHoverMesh()) return;
+        if (targetMesh !== this.getCurrentHoverMesh()) {
+          return;
+        }
+        this.chart.update(criteria);
       }
     }
     this.featureDetails.innerHTML = html;
@@ -329,7 +326,9 @@ export class DataViewerControl {
 
 // 要素に応じて値を文字列化
 const formatValue = (elem, level, v) => {
-  if (!Number.isFinite(v)) {
+  if (v === null || v === undefined) {
+    return '-';
+  } else if (!Number.isFinite(v)) {
     return v;
   } else {
     if (v < 0) {
@@ -386,20 +385,25 @@ const createBasicTable = (props, elem, level) => {
 };
 
 // 詳細情報テーブルの作成
-const createDetailTable = (elem, entries) => {
+const createDetailTable = (elem, props) => {
+  const config = DISPLAY_PROPS_CONFIG[elem];
+  if (!config) return '';
+
+  const configKeys = Object.keys(config);
   let html = '<table>';
-  for (let i = 0; i < entries.length; i += 2) {
+
+  for (let i = 0; i < configKeys.length; i += 2) {
     html += '<tr>';
-    const [k1, v1] = entries[i];
+    const k1 = configKeys[i];
     html += `
-      <td class="px-2">${k1}</td>
-      <td class="px-2">${formatValue(elem, k1, v1)}</td>
+      <td class="px-2">${config[k1] ?? k1}</td>
+      <td class="px-2">${formatValue(elem, k1, props[k1])}</td>
     `;
-    if (entries[i + 1]) {
-      const [k2, v2] = entries[i + 1];
+    if (configKeys[i + 1]) {
+      const k2 = configKeys[i + 1];
       html += `
-        <td class="px-2">${k2}</td>
-        <td class="px-2">${formatValue(elem, k2, v2)}</td>
+        <td class="px-2">${config[k2] ?? k2}</td>
+        <td class="px-2">${formatValue(elem, k2, props[k2])}</td>
       `;
     } else {
       html += '<td></td><td></td>';
