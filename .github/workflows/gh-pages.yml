@@ -32,26 +32,27 @@ jobs:
           cache: "pip"
 
       - name: Install Python dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          # https://pypi.org/project/tippecanoe/で代替
+          pip install tippecanoe==2.72.0
 
       - name: Cache downloaded tables
         id: cache-table
         uses: actions/cache@v4
         with:
           path: table/
-          key: ${{ runner.os }}-table-${{ hashFiles('scripts/00_download_csv.sh') }}
+          key: table-2026-05-08-${{ hashFiles('scripts/00_download_csv.sh') }} # 基準値が更新されたらここを更新
           restore-keys: |
-            ${{ runner.os }}-table-
+            table-
 
       - name: Download table
+        if: steps.cache-table.outputs.cache-hit != 'true'
         run: scripts/00_download_csv.sh
         timeout-minutes: 30
 
       - name: Generate data
-        run: |
-          python scripts/01_make_geojson_rainri.py
-          python scripts/01_make_geojson_rainsri.py
-          python scripts/01_make_geojson_soil.py
+        run: scripts/01_make_geojson.sh
 
       - name: Generate tiles
         run: |
