@@ -15,7 +15,7 @@ export const MESH_LAYER_IDS = Object.freeze(
 );
 export const PAINT_CONFIG = Object.freeze({
   /** 固定選択時の格子の透明度 */
-  fill_opacity_fix: 1.0,
+  fill_opacity_fix: 0.9,
   /** マウスホバー時の格子の透明度 */
   fill_opacity_hover: 0.9,
   /** マウス非ホバー時の格子の透明度 */
@@ -28,9 +28,8 @@ export const PAINT_CONFIG = Object.freeze({
   fill_outline_color: 'transparent',
 });
 
-export const HOVERED_GRID_FILL_OPACITY_VALUE = 0.9;
-
-export const GRID_FILL_OPACITY_VALUE = 0.7;
+export const MIN_ZOOM = 4;
+export const MAX_ZOOM = 13.99;
 /** 各メッシュレイヤーを表示するズームレベル */
 export const ZOOM_RANGE = Object.freeze({
   ms2: [4, 6],
@@ -39,6 +38,7 @@ export const ZOOM_RANGE = Object.freeze({
 });
 /** 凡例カラーリスト */
 export const COLORS = Object.freeze([
+  '#a9a9a9', // missing value
   '#1c3f75',
   '#116797',
   '#068fb9',
@@ -52,9 +52,9 @@ export const COLORS = Object.freeze([
 ]);
 /** 基準要素の凡例閾値 */
 export const LEVELS = Object.freeze({
-  rainsri: [1, 8, 12, 16, 24, 32, 40, 50, 60, 70],
-  rainri: [1, 4, 8, 12, 16, 20, 40, 60, 200, 500],
-  soil: [1, 4500, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000],
+  rainsri: [0, 8, 12, 16, 24, 32, 40, 50, 60, 70],
+  rainri: [0, 4, 8, 12, 16, 20, 40, 60, 200, 500],
+  soil: [0, 4500, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000],
 });
 /** ソース情報に表示するリンク */
 export const ATTRIBUTION = Object.freeze({

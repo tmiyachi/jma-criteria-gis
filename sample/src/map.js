@@ -8,6 +8,8 @@ import {
   CRITERIA_HOST,
   ELEMENTS,
   MESHES,
+  MAX_ZOOM,
+  MIN_ZOOM,
   ZOOM_RANGE,
   PAINT_CONFIG as PC,
   ATTRIBUTION,
@@ -21,8 +23,8 @@ export const initMap = (containerId) => {
     container: containerId,
     center: [135, 35],
     zoom: 7,
-    maxZoom: 12,
-    minZoom: 4,
+    maxZoom: MAX_ZOOM,
+    minZoom: MIN_ZOOM,
     style: {
       version: 8,
       sources: {},
@@ -170,7 +172,7 @@ export const setupElementLayers = async (map) => {
         url: `pmtiles://${CRITERIA_HOST}tiles/${elem}.${mesh}.pmtiles`,
         attribution:
           ATTRIBUTION.jmacriteria +
-          (meta.reference_date ? `（${meta.reference_date}）` : ''),
+          (meta.reference_date ? `（基準日: ${meta.reference_date}）` : ''),
       });
 
       const [minzoon, maxzoom] = ZOOM_RANGE[mesh];

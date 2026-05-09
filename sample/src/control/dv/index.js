@@ -419,9 +419,7 @@ const colorExpression = (elem, level) => {
   return [
     'step',
     ['to-number', ['get', level]],
-    '#a9a9a9', // 未定義
-    0,
-    'rgba(0,0,0,0)', // 0
-    ...LEVELS[elem].map((v, i) => [v, COLORS[i]]).flat(),
+    COLORS[0],
+    ...LEVELS[elem].map((v, i) => [v, COLORS[i + 1]]).flat(),
   ];
 };
