@@ -17,7 +17,7 @@ function download_csv() {
   fi
 
   echo "Downloading table_${prefix}..."
-  wget -N -P $dir -i <(
+  wget -q -N -P $dir -i <(
     for pref in "${prefs[@]}"; do
       if [[ $pref == "daitojima" && $prefix == 2_* ]]; then
         # 大東島には土砂災害基準テーブルがない
