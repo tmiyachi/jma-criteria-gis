@@ -4,6 +4,7 @@
 import { debounce } from 'lodash-es';
 
 import { getCityInfoByCityCode, fetchRainRiMs3 } from '@/service';
+import { SoilCriteriaLineChart } from './chart';
 import { COLORS, LEVELS, OPTIONS } from '@/constant';
 
 export class DataViewerControl {
@@ -69,12 +70,16 @@ export class DataViewerControl {
       </div>
       <div class="maplibregl-ctrl dv-container">
         <div id="dv-feature-detail"></div>
+        <svg id="dv-soil-chart"></svg>
       </div>
     `;
 
     this.zoomDisplay = container.querySelector('#dv-zoom-display');
     this.layerSelect = container.querySelector('#dv-layer-select');
     this.featureDetails = container.querySelector('#dv-feature-detail');
+    this.chart = new SoilCriteriaLineChart(
+      container.querySelector('#dv-soil-chart'),
+    );
 
     OPTIONS.forEach((item) => {
       const option = document.createElement('option');
@@ -277,6 +282,7 @@ export class DataViewerControl {
   async renderDetails(props) {
     if (!props) {
       this.featureDetails.textContent = 'Hover over on a grid';
+      this.chart.update(null);
       return;
     }
 
@@ -301,6 +307,13 @@ export class DataViewerControl {
       );
       html += '<hr>';
       html += createDetailTable(elem, entries);
+
+      // 土砂の場合はグラフ更新
+      if (elem == 'soil') {
+        this.chart.update(props.ms3);
+        // 土砂のデータ取得中に表示対象の格子が変わっていたら中止
+        if (targetMesh !== this.getCurrentHoverMesh()) return;
+      }
     }
     this.featureDetails.innerHTML = html;
   }

@@ -34,6 +34,32 @@ MISSING_VALUE = -1
 BASE_DIR = Path(__file__).parent.parent
 TABLE_DIR = BASE_DIR / "table"
 GEOJSON_DIR = BASE_DIR / "geojson"
+JSON_DIR = BASE_DIR / "data"
+
+
+def read_one_table(pref_name, lev):
+    num = {5: "2_1", 4: "2_2", 2: "2_3"}[lev]
+    table_path = TABLE_DIR / f"table_{num}" / f"{num}_{pref_name}.csv"
+    if not table_path.exists():
+        raise FileNotFoundError(f"File not found: {table_path.name}")
+
+    df = (
+        pd.read_csv(
+            table_path, encoding="shift-jis", na_values=["-1", "−", "－"], comment="#"
+        )
+        .rename(columns=NAMES_TABLE_2)  # カラム名変更
+        .loc[:, NAMES_TABLE_2.values()]  # 必要なカラムのみ選択
+        .fillna(MISSING_VALUE)
+    )
+
+    # コード番号は文字列型に変換
+    df["ms3"] = df["ms3"].map("{:08d}".format)
+    df["code"] = df["code"].map(lambda code: "{:07d}".format(int(code)))
+    # ms3とcode以外は整数に変換
+    for col in filter(lambda c: c not in ["ms3", "code"], df.columns):
+        df[col] = df[col].astype(int)
+
+    return df
 
 
 def read_table(pref_name):
@@ -140,6 +166,50 @@ def make_geojson(mesh, pref_name, geojson_path):
             f.write(json.dumps(feature) + "\n")
 
 
+def make_json():
+    """府県予報区の基準値テーブルから、メッシュ単位で階層化したJSON形式で出力する"""
+    pref_names = [p.stem.split("_")[-1] for p in TABLE_DIR.glob("**/2_1_*.csv")]
+
+    df_list = []
+    for lv in [2, 4, 5]:
+        # 全国分読む
+        df = pd.concat([read_one_table(p, lv) for p in pref_names], ignore_index=True)
+
+        rain_cols = [col for col in df.columns if col.startswith("rain")]
+        # 基準値がMISSING_VALUEの格子は除外
+        df = df[(df[rain_cols] != MISSING_VALUE).all(axis=1)].copy()
+        # リストにまとめる
+        df[f"lv{lv}"] = df[rain_cols].values.tolist()
+        df = df.drop(columns=rain_cols)
+
+        df_list.append(df)
+
+    # 1つにまとめる
+    df_all = df_list[0]
+    for df in df_list[1:]:
+        df_all = df_all.merge(df, on=["code", "ms3"], how="outer")
+
+    # ファイルサイズを小さくするため1次メッシュ単位で集約する
+    df_all["ms1"] = df_all["ms3"].str[:4]
+    for ms1, df_ms1 in df_all.groupby("ms1"):
+        records = (
+            df_ms1[["ms3", "code", "lv5", "lv4", "lv2"]]
+            .replace({pd.NA: None})
+            .to_dict("records")
+        )
+        # mergeで欠損になったレベル（Lv2は基準がないがLv5は基準があるような場合）を除く
+        result = [
+            {k: v for k, v in r.items() if isinstance(v, list) or pd.notna(v)}
+            for r in records
+        ]
+
+        json_path = JSON_DIR / "soil" / f"{ms1}.json"
+        if not json_path.parent.exists():
+            json_path.parent.mkdir(parents=True)
+        with open(json_path, "w", encoding="utf-8") as file:
+            json.dump(result, file, ensure_ascii=False)
+
+
 def get_reference_date():
     reference_dates = []
     pattern = r"更新日:令和\s*(\d+)年\s*(\d{1,2})月\s*(\d{1,2})日"
@@ -170,6 +240,10 @@ if __name__ == "__main__":
     make_geojson("ms2", "japan", GEOJSON_DIR / "soil" / "japan.ms2.jsonl")
     print("Processing soil msjma5k...")
     make_geojson("msjma5k", "japan", GEOJSON_DIR / "soil" / "japan.msjma5k.jsonl")
+
+    # 各格子の全基準値をまとめたJSONも作成
+    print("Processing soil json...")
+    make_json()
 
     # 更新日情報をテキストファイルで配置
     ref_date = get_reference_date()
