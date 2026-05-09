@@ -240,6 +240,6 @@ if __name__ == "__main__":
     make_json()
 
     # 更新日情報をテキストファイルで配置
-    ref_date = get_reference_date()
-    with open(GEOJSON_DIR / "rainri" / "updated.txt", "w") as f:
-        f.write(ref_date.strftime("%Y-%m-%d"))
+    date = get_reference_date()
+    with open(GEOJSON_DIR / "rainri" / "reference_date.txt", "w") as f:
+        f.write(f"令和{date.year-2018}年{date.month}月{date.day}日")

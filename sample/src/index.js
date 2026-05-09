@@ -21,7 +21,7 @@ const startApp = async () => {
 
   map.on('load', async () => {
     // レイヤー登録
-    setupLayers(map);
+    await setupLayers(map); // メタデータの取得を待たないと反映されないのでawait
 
     // コントロールの追加
     map.addControl(

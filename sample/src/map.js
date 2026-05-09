@@ -36,10 +36,10 @@ export const initMap = (containerId) => {
 /**
  * レイヤーの初期化
  */
-export const setupLayers = (map) => {
+export const setupLayers = async (map) => {
   setupGsiLayers(map);
   setupJmaGisLayers(map);
-  setupElementLayers(map);
+  await setupElementLayers(map);
 };
 
 export const setupJmaGisLayers = (map) => {
@@ -154,16 +154,22 @@ export const setupGsiLayers = (map) => {
   });
 };
 
-export const setupElementLayers = (map) => {
-  ELEMENTS.forEach((elem) => {
+export const setupElementLayers = async (map) => {
+  for (const elem of ELEMENTS) {
+    // attributionに追記するためメタデータ取得（ここでawaitしないと反映されない）
+    const meta = await fetch(`./tiles/${elem}.metadata.json`)
+      .then((res) => (res.ok ? res.json() : {}))
+      .catch(() => ({}));
+
     MESHES.forEach((mesh) => {
       const sourceLayerId = `${elem}-${mesh}`;
       const id = `elem-${elem}-${mesh}`;
-
       map.addSource(id, {
         type: 'vector',
         url: `pmtiles:///tiles/${elem}.${mesh}.pmtiles`,
-        attribution: ATTRIBUTION.jmacriteria,
+        attribution:
+          ATTRIBUTION.jmacriteria +
+          (meta.reference_date ? `（${meta.reference_date}）` : ''),
       });
 
       const [minzoon, maxzoom] = ZOOM_RANGE[mesh];
@@ -201,5 +207,5 @@ export const setupElementLayers = (map) => {
         },
       });
     });
-  });
+  }
 };

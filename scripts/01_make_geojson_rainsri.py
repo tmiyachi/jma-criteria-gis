@@ -174,6 +174,6 @@ if __name__ == "__main__":
     make_geojson("msjma5k", "japan", GEOJSON_DIR / "rainsri" / "japan.msjma5k.jsonl")
 
     # 更新日情報をテキストファイルで配置
-    ref_date = get_reference_date()
-    with open(GEOJSON_DIR / "rainsri" / "updated.txt", "w") as f:
-        f.write(ref_date.strftime("%Y-%m-%d"))
+    date = get_reference_date()
+    with open(GEOJSON_DIR / "rainsri" / "reference_date.txt", "w") as f:
+        f.write(f"令和{date.year-2018}年{date.month}月{date.day}日")

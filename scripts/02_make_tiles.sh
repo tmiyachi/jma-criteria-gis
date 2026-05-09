@@ -2,15 +2,16 @@
 set -eu
 
 # directories settings
-SCRIPT_DIR=$(cd $(dirname $0) && pwd)
-TILE_DIR=${SCRIPT_DIR}/../tiles
-GEOJSON_DIR=${SCRIPT_DIR}/../geojson
+PROJECT_DIR=$(cd $(dirname $0)/.. && pwd)
 
-ATTRIBUTION='<a href="https://www.jma.go.jp/jma/kishou/know/kijun/index.html">気象庁「特別警報の指標及び危険警報・警報・注意報発表基準一覧表」を加工して作成</a>'
+MESHES=(ms2 msjma5k ms3)
+ELEMS=(rainsri rainri soil)
 
 function make_tiles() {
   local elem=$1
-  for mesh in ms2 msjma5k ms3; do
+  reference_date=$(cat geojson/${elem}/reference_date.txt)
+
+  for mesh in "${MESHES[@]}"; do
     case $mesh in
     "ms2")
       minzoom=4
@@ -26,28 +27,36 @@ function make_tiles() {
       ;;
     esac
     tippecanoe --force \
-      --name="jmagis" \
-      --description="JMA Warning & Advisory Criteria Vector Tiles" \
-      --attribution="${ATTRIBUTION}" \
-      --layer="${elem}-${mesh}" \
-      --maximum-zoom=${maxzoom} \
-      --minimum-zoom=${minzoom} \
+      -n "jmagis" \
+      -N "JMA Warning & Advisory Criteria Mesh (Vector Tile" \
+      -A "気象庁「特別警報の指標及び危険警報・警報・注意報発表基準一覧表」(基準日: ${reference_date}) を加工" \
+      -l "${elem}-${mesh}" \
+      -z ${maxzoom} \
+      -Z ${minzoom} \
       --detect-shared-borders \
       --generate-ids \
-      -o ${TILE_DIR}/${elem}.${mesh}.pmtiles \
-      ${GEOJSON_DIR}/${elem}/*.${mesh}.jsonl
+      -o tiles/${elem}.${mesh}.pmtiles \
+      geojson/${elem}/*.${mesh}.jsonl
   done
 }
 
-rm -f ${TILE_DIR}/*.pmtiles
-rm -f ${TILE_DIR}/*.json
+cd ${PROJECT_DIR}
 
-for elem in rainsri rainri soil; do
+rm -f tiles/*.pmtiles
+rm -f tiles/*.json
+
+for elem in "${ELEMS[@]}"; do
   make_tiles ${elem}
-  cat <<EOF >${TILE_DIR}/${elem}.metadata.json
+done
+
+for elem in "${ELEMS[@]}"; do
+  created_date="令和$(($(date +%Y) - 2018))年$(date +%-m月%-d日)"
+  reference_date=$(cat geojson/${elem}/reference_date.txt)
+  cat <<EOF >tiles/${elem}.metadata.json
 {
-  "created": "$(date -I)",
-  "updated": "$(cat ${GEOJSON_DIR}/${elem}/updated.txt)"
+  "element": "${elem}",
+  "created": "${created_date}",
+  "reference_date": "${reference_date}"
 }
 EOF
 done
