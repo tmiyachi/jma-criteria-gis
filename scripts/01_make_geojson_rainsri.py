@@ -69,7 +69,7 @@ def read_table(pref_name):
 
     # Lv4危険警報基準値（別表1-3に記載のない格子はLv4基準はあるが危険警報の発表対象外なので未定義値にする）
     s = df_1_1["lv4"].where(df_1_1["ms3"].isin(df_1_3["ms3"]), MISSING_VALUE)
-    df_1_1.insert(df_1_1.columns.get_loc("lv4") + 1, "lv4_urgent", s)
+    df_1_1.insert(df_1_1.columns.get_loc("lv4") + 1, "lv4u", s)
 
     # コード番号は文字列型に変換
     df_1_1["ms3"] = df_1_1["ms3"].map("{:08d}".format)

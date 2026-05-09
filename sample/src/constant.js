@@ -69,7 +69,7 @@ export const OPTIONS = Object.freeze([
   { text: 'レベル4大雨危険警報の表面雨量指数基準値', value: 'rainsri,lv4' },
   {
     text: 'レベル4大雨危険警報の表面雨量指数基準値（危険警報対象）',
-    value: 'rainsri,lv4_urgent',
+    value: 'rainsri,lv4u',
   },
   { text: 'レベル5大雨特別警報の表面雨量指数基準値', value: 'rainsri,lv5' },
   { text: 'レベル2大雨注意報の流域雨量指数基準値', value: 'rainri,lv2' },
@@ -85,7 +85,7 @@ export const OPTIONS = Object.freeze([
   { text: 'レベル4大雨危険警報の流域雨量指数基準値', value: 'rainri,lv4' },
   {
     text: 'レベル4大雨危険警報の流域雨量指数基準値（危険警報対象）',
-    value: 'rainri,lv4_urgent',
+    value: 'rainri,lv4u',
   },
   { text: 'レベル5大雨特別警報の流域雨量指数基準値', value: 'rainri,lv5' },
   { text: 'レベル2土砂災害注意報の基準線面積', value: 'soil,lv2' },
@@ -96,7 +96,7 @@ export const OPTIONS = Object.freeze([
 export const DISPLAY_PROPS_CONFIG = Object.freeze({
   rainsri: {
     lv5: 'レベル5',
-    lv4_urgent: 'レベル4(危険警報)',
+    lv4u: 'レベル4 (危険警報)',
     lv4: 'レベル4',
     lv3: 'レベル3',
     lv2: 'レベル2',
@@ -105,7 +105,7 @@ export const DISPLAY_PROPS_CONFIG = Object.freeze({
     rcode: '河川コード',
     rname: '河川名',
     lv5: 'レベル5',
-    lv4_urgent: 'レベル4(危険警報)',
+    lv4u: 'レベル4 (危険警報)',
     lv4: 'レベル4',
     lv3: 'レベル3',
     lv3ri: 'レベル3(複合/流域)',
