@@ -2,30 +2,15 @@
  * 地図、レイヤーの初期化
  */
 import maplibregl from 'maplibre-gl';
-import LayerControl from './control/layer';
-import './control/layer/style.css';
-
-import { updateZoomInfo, updateInfoPanel } from './ui';
 
 import {
   GIS_HOST,
-  CRITERIA_HOST,
-  COLORS,
-  LEVELS,
   ELEMENTS,
   MESHES,
   ZOOM_RANGE,
-  GRID_FILL_OPACITY_VALUE,
-  HOVERED_GRID_FILL_OPACITY_VALUE,
-  MESH_LAYER_IDS,
-  ATTRIBUTION_JMAGIS,
-  ATTRIBUTION_GIS,
-} from './constant';
-
-/**
- * マウスホバーしているレイヤー
- */
-let hoveredState = null; // { source, sourceLayer, id }
+  PAINT_CONFIG as PC,
+  ATTRIBUTION,
+} from '@/constant';
 
 /**
  * Mapオブジェクトの初期化
@@ -42,20 +27,8 @@ export const initMap = (containerId) => {
       sources: {},
       layers: [],
     },
+    attributionControl: false, // データソース初期化後に追加するためfalse
   });
-
-  // コントロールの追加
-  map.addControl(new maplibregl.ScaleControl(), 'bottom-right');
-  map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
-
-  const layerControl = new LayerControl([
-    { id: 'jmagis', label: '気象庁細分区' },
-    { id: 'gsi-blank-layer', label: '地理院地図（白地図）' },
-    { id: 'gsi-std-layer', label: '地理院地図（標準）' },
-    { id: 'gsi-pale-layer', label: '地理院地図（淡色）' },
-    { id: 'gsi-slopemap-layer', label: '地理院地図（地形）' },
-  ]);
-  map.addControl(layerControl, 'top-left');
 
   return map;
 };
@@ -73,14 +46,14 @@ export const setupJmaGisLayers = (map) => {
   map.addSource('jmagis', {
     type: 'vector',
     tiles: [`${GIS_HOST}/tiles/zxy/{z}/{x}/{y}.pbf`],
-    attribution: ATTRIBUTION_JMAGIS,
+    attribution: ATTRIBUTION.jmagis,
   });
   map.addLayer({
     id: 'city-lines',
     type: 'line',
     source: 'jmagis',
     'source-layer': 'city',
-    layout: {},
+    layout: { visibility: 'visible' },
     paint: {
       'line-color': '#627BC1',
       'line-opacity': 0.5,
@@ -91,7 +64,7 @@ export const setupJmaGisLayers = (map) => {
     type: 'line',
     source: 'jmagis',
     'source-layer': 'matomearea',
-    layout: {},
+    layout: { visibility: 'visible' },
     paint: {
       'line-color': '#627BC1',
       'line-opacity': 0.8,
@@ -102,7 +75,7 @@ export const setupJmaGisLayers = (map) => {
     type: 'line',
     source: 'jmagis',
     'source-layer': 'firstarea',
-    layout: {},
+    layout: { visibility: 'visible' },
     paint: {
       'line-color': '#757575',
       'line-width': 0.8,
@@ -114,7 +87,7 @@ export const setupJmaGisLayers = (map) => {
     type: 'line',
     source: 'jmagis',
     'source-layer': 'pref',
-    layout: {},
+    layout: { visibility: 'visible' },
     paint: {
       'line-color': '#212121',
       'line-width': 0.8,
@@ -127,25 +100,25 @@ export const setupGsiLayers = (map) => {
     type: 'raster',
     tiles: ['https://cyberjapandata.gsi.go.jp/xyz/blank/{z}/{x}/{y}.png'],
     tileSize: 256,
-    attribution: ATTRIBUTION_GIS,
+    attribution: ATTRIBUTION.gis,
   });
   map.addSource('gsi-std-tiles', {
     type: 'raster',
     tiles: ['https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png'],
     tileSize: 256,
-    attribution: ATTRIBUTION_GIS,
+    attribution: ATTRIBUTION.gis,
   });
   map.addSource('gsi-pale-tiles', {
     type: 'raster',
     tiles: ['https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'],
     tileSize: 256,
-    attribution: ATTRIBUTION_GIS,
+    attribution: ATTRIBUTION.gis,
   });
   map.addSource('gsi-slopemap-tiles', {
     type: 'raster',
     tiles: ['https://cyberjapandata.gsi.go.jp/xyz/slopemap/{z}/{x}/{y}.png'],
     tileSize: 256,
-    attribution: ATTRIBUTION_GIS,
+    attribution: ATTRIBUTION.gis,
   });
   map.addLayer({
     id: 'gsi-blank-layer',
@@ -189,7 +162,8 @@ export const setupElementLayers = (map) => {
 
       map.addSource(id, {
         type: 'vector',
-        url: `pmtiles://${CRITERIA_HOST}/tiles/${elem}.${mesh}.pmtiles`,
+        url: `pmtiles:///tiles/${elem}.${mesh}.pmtiles`,
+        attribution: ATTRIBUTION.jmacriteria,
       });
 
       const [minzoon, maxzoom] = ZOOM_RANGE[mesh];
@@ -201,111 +175,31 @@ export const setupElementLayers = (map) => {
         'source-layer': sourceLayerId,
         minzoom: minzoon,
         maxzoom: maxzoom,
-        layout: {},
+        layout: { visibility: 'none' },
         paint: {
           'fill-color': 'rgb(0,0,0,0)',
-          'fill-outline-color': 'rgb(0,0,0,0)',
+          'fill-outline-color': [
+            'case',
+            ['boolean', ['feature-state', 'dragging'], false],
+            PC.fill_outline_color,
+            ['boolean', ['feature-state', 'fix'], false],
+            PC.fill_outline_color_fix,
+            ['boolean', ['feature-state', 'hover'], false],
+            PC.fill_outline_color_hover,
+            PC.fill_outline_color,
+          ],
           'fill-opacity': [
             'case',
+            ['boolean', ['feature-state', 'dragging'], false],
+            PC.fill_opacity,
+            ['boolean', ['feature-state', 'fix'], false],
+            PC.fill_opacity_fix,
             ['boolean', ['feature-state', 'hover'], false],
-            HOVERED_GRID_FILL_OPACITY_VALUE,
-            GRID_FILL_OPACITY_VALUE,
+            PC.fill_opacity_hover,
+            PC.fill_opacity,
           ],
         },
       });
     });
   });
-};
-
-/**
- * レイヤーのカラーマップを作成
- * @param {string} elem 要素
- * @param {string} level レベル
- * @returns カラーマップ
- */
-const colorExpression = (elem, level) => {
-  return [
-    'step',
-    ['to-number', ['get', level]],
-    '#a9a9a9', // 未定義
-    0,
-    'rgba(0,0,0,0)', // 0
-    ...LEVELS[elem].map((v, i) => [v, COLORS[i]]).flat(),
-  ];
-};
-
-/**
- * セレクトボックスの選択状態でレイヤーのプロパティを変更
- */
-const changeLayerProperty = (map) => {
-  const selected = document.getElementById('element-selector').value;
-  if (!selected) return;
-
-  const [selectedElem, selectedLevel] = selected.split(',');
-  ELEMENTS.forEach((elem) => {
-    MESHES.forEach((mesh) => {
-      const id = `elem-${elem}-${mesh}`;
-      const color = colorExpression(elem, selectedLevel);
-      const visibility = elem == selectedElem ? 'visible' : 'none';
-      if (map.getLayer(id)) {
-        map.setPaintProperty(id, 'fill-color', color);
-        map.setLayoutProperty(id, 'visibility', visibility);
-        // map.setPaintProperty(id, 'fill-outline-color', color);
-      }
-    });
-  });
-};
-
-/**
- * イベントの設定
- */
-export const setupMapEvents = (map) => {
-  // マウスイベント
-  MESH_LAYER_IDS.forEach((layerId) => {
-    map.on('mousemove', layerId, (e) => {
-      if (e.features.length > 0) {
-        const feature = e.features[0];
-
-        if (hoveredState) {
-          map.setFeatureState(hoveredState, { hover: false });
-          updateInfoPanel(null);
-        }
-
-        hoveredState = {
-          source: feature.source,
-          sourceLayer: feature.sourceLayer,
-          id: feature.id,
-        };
-        map.setFeatureState(hoveredState, { hover: true });
-        map.getCanvas().style.cursor = 'pointer';
-
-        // 情報パネル更新
-        const props = e.features[0].properties;
-        updateInfoPanel(props);
-      }
-    });
-
-    map.on('mouseleave', layerId, () => {
-      if (hoveredState) {
-        map.setFeatureState(hoveredState, { hover: false });
-        hoveredState = null;
-      }
-      map.getCanvas().style.cursor = '';
-      updateInfoPanel(null);
-    });
-  });
-
-  // zoomイベント
-  map.on('zoom', () => {
-    updateZoomInfo(map);
-  });
-
-  // セレクトボックス
-  document.getElementById('element-selector').addEventListener('change', () => {
-    changeLayerProperty(map);
-  });
-
-  // 初期化
-  updateZoomInfo(map);
-  changeLayerProperty(map);
 };

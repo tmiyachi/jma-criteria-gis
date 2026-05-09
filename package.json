@@ -4,6 +4,7 @@
   "description": "Sample page using vector tiles processed from JMA Warning & Advisory criteria GIS",
   "main": "index.js",
   "dependencies": {
+    "lodash-es": "^4.18.1",
     "maplibre-gl": "^5.24.0",
     "pmtiles": "^4.4.1"
   },

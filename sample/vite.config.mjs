@@ -48,10 +48,6 @@ export default defineConfig(({ mode }) => {
     },
 
     define: {
-      JMA_CRITERIA_HOST:
-        mode === 'production'
-          ? JSON.stringify('https://tmiyachi.github.io/jma-criteria-gis/')
-          : JSON.stringify(`http://localhost:8080`),
       JMA_GIS_HOST: JSON.stringify(
         'https://raw.githubusercontent.com/tmiyachi/jma-gis/master',
       ),

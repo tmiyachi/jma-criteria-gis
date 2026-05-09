@@ -1,7 +1,7 @@
 /**
  * 気象庁地域コードAPI
  */
-import { GIS_HOST } from '../constant';
+import { GIS_HOST } from '@/constant';
 
 let jmaCodeMap = new Map();
 let isLoaded = false;
@@ -37,5 +37,6 @@ export const loadJmaCode = async () => {
  * 二次細分区コードから二次細分区情報を取得
  */
 export const getCityInfoByCityCode = (code) => {
+  if (!code) return code;
   return jmaCodeMap.get(code);
 };

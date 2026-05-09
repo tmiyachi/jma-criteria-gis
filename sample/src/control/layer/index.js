@@ -1,8 +1,8 @@
 /**
- * レイヤー切り替えカスタムコントロール
+ * 地図レイヤー切り替えカスタムコントロール
  */
 
-export default class LayerControl {
+export class LayerControl {
   constructor(layers) {
     // layers: { id: "レイヤーID", label: "表示名" } の配列
     this.layers = layers;
