@@ -60,22 +60,28 @@ def read_table(pref_name):
     if not table_1_4_path.exists():
         raise FileNotFoundError(f"File not found: {table_1_4_path.name}")
     # テーブルを読み込む
-    df_1_2 = pd.read_csv(
-        table_1_2_path,
-        encoding="shift-jis",
-        na_values=["-1", "－"],
-        comment="#",
-        usecols=NAMES_TABLE_1_2.keys(),
-    ).rename(
-        columns=NAMES_TABLE_1_2
-    )  # カラム名変更
-    df_1_4 = pd.read_csv(
-        table_1_4_path,
-        encoding="shift-jis",
-        na_values=["-1", "－"],
-        comment="#",
-        usecols=NAMES_TABLE_1_4.keys(),
-    ).rename(columns=NAMES_TABLE_1_4)
+    df_1_2 = (
+        pd.read_csv(
+            table_1_2_path,
+            encoding="shift-jis",
+            na_values=["-1", "－"],
+            comment="#",
+            usecols=NAMES_TABLE_1_2.keys(),
+        ).rename(columns=NAMES_TABLE_1_2)
+        # 元データに重複する行が含まれていることがあるので削除する
+        .drop_duplicates(subset=["code", "ms3", "rcode"])
+    )
+    df_1_4 = (
+        pd.read_csv(
+            table_1_4_path,
+            encoding="shift-jis",
+            na_values=["-1", "－"],
+            comment="#",
+            usecols=NAMES_TABLE_1_4.keys(),
+        )
+        .rename(columns=NAMES_TABLE_1_4)
+        .drop_duplicates()
+    )
     # 河川名のない格子で格子番号が000で終わる格子は非流路格子、そうでない場合はN.D.とする
     # 配信資料に関する技術情報第 664 号: 計算対象河川が存在しない格子の指数値は、河川番号の下 3 桁を「000」として対応付けています
     df_1_2.loc[(df_1_2.rcode % 1000 == 0), "rname"] = "非流路格子"
