@@ -73,8 +73,10 @@ def read_table(pref_name):
         .loc[:, NAMES_TABLE_1_4.values()]
         .fillna(MISSING_VALUE)
     )
-    # 河川名のない格子（名無し河川 or 流路なし格子）は空欄とする
-    df_1_2["rname"] = df_1_2["rname"].fillna("")
+    # 河川名のない格子で格子番号が000で終わる格子は非流路格子、そうでない場合はN.D.とする
+    # 配信資料に関する技術情報第 664 号: 計算対象河川が存在しない格子の指数値は、河川番号の下 3 桁を「000」として対応付けています
+    df_1_2.loc[(df_1_2.rcode % 1000 == 0), "rname"] = "非流路格子"
+    df_1_2["rname"] = df_1_2["rname"].fillna("N.D.")
     # 未定義値をNaNから置き換え
     df_1_2 = df_1_2.fillna(MISSING_VALUE)
 
