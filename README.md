@@ -27,10 +27,11 @@
 
 ## Dependencies
 
-- [mapshaper](https://github.com/mbloch/mapshaper)
-- [tippecanoe](https://github.com/mapbox/tippecanoe)
+- [tippecanoe](https://github.com/felt/tippecanoe)
 
 ## Make
+
+FELT版のtippecanoeをパスに通しておく。
 
 必要なパッケージをダウンロードする．
 
@@ -52,9 +53,7 @@ csvテーブル表から geojson（jsonl） ファイルを作成する．
 
 ```
 # ./scripts
-python 01_make_geojson_rainri.py
-python 01_make_geojson_rainsri.py
-python 01_make_geojson_soil.py
+./01_make_geojson.sh
 ```
 
 ベクトルタイルを作成する．
