@@ -13,6 +13,6 @@ rm -f geojson/**/*.jsonl
 rm -f geojson/**/*.txt
 rm -f data/**/*.json
 
-python $SCRIPT_DIR/01_make_geojson_rainsri.py
-python $SCRIPT_DIR/01_make_geojson_rainri.py
-python $SCRIPT_DIR/01_make_geojson_soil.py
+python scripts/01_make_geojson_rainsri.py
+python scripts/01_make_geojson_rainri.py
+python scripts/01_make_geojson_soil.py
