@@ -13,8 +13,14 @@ export class LayerControl {
   onAdd(map) {
     this.map = map;
     this.container = document.createElement('div');
-    this.container.className =
-      'maplibregl-ctrl maplibregl-ctrl-group maplibregl-layer-ctrl';
+    this.container.className = 'maplibregl-ctrl maplibregl-ctrl-layer';
+
+    const icon = document.createElement('span');
+    icon.className = 'layer-ctrl-icon';
+    this.container.appendChild(icon);
+
+    const list = document.createElement('div');
+    list.className = 'layer-list';
 
     this.layers.forEach((layer) => {
       const label = document.createElement('label');
