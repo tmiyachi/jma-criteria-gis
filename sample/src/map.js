@@ -5,6 +5,7 @@ import maplibregl from 'maplibre-gl';
 
 import {
   GIS_HOST,
+  CRITERIA_HOST,
   ELEMENTS,
   MESHES,
   ZOOM_RANGE,
@@ -157,7 +158,7 @@ export const setupGsiLayers = (map) => {
 export const setupElementLayers = async (map) => {
   for (const elem of ELEMENTS) {
     // attributionに追記するためメタデータ取得（ここでawaitしないと反映されない）
-    const meta = await fetch(`./tiles/${elem}.metadata.json`)
+    const meta = await fetch(`${CRITERIA_HOST}tiles/${elem}.metadata.json`)
       .then((res) => (res.ok ? res.json() : {}))
       .catch(() => ({}));
 
@@ -166,7 +167,7 @@ export const setupElementLayers = async (map) => {
       const id = `elem-${elem}-${mesh}`;
       map.addSource(id, {
         type: 'vector',
-        url: `pmtiles:///tiles/${elem}.${mesh}.pmtiles`,
+        url: `pmtiles://${CRITERIA_HOST}tiles/${elem}.${mesh}.pmtiles`,
         attribution:
           ATTRIBUTION.jmacriteria +
           (meta.reference_date ? `（${meta.reference_date}）` : ''),

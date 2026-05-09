@@ -2,6 +2,8 @@
  * 流域雨量指数基準API
  */
 
+import { CRITERIA_HOST } from '@/constant';
+
 const MAX_CACHE_COUNT = 20;
 const meshCache = new Map();
 const pendingRequests = new Map();
@@ -26,7 +28,7 @@ export const fetchRainRiMs3 = async (ms3) => {
     return pendingRequests.get(ms1);
   }
 
-  const url = `./data/rainri/${ms1}.json`;
+  const url = `${CRITERIA_HOST}data/rainri/${ms1}.json`;
   const requestPromise = (async () => {
     try {
       const response = await fetch(url);

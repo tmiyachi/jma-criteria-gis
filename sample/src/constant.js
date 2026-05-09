@@ -2,7 +2,9 @@
  * 定数
  */
 /** GIS地図ベクトルタイルのホスト */
-export const GIS_HOST = JMA_GIS_HOST ?? 'http://localhost'; // eslint-disable-line no-undef
+export const GIS_HOST = JMA_GIS_HOST || 'http://localhost/'; // eslint-disable-line no-undef
+/** ページのホスト */
+export const CRITERIA_HOST = import.meta.env.VITE_APP_BASE || './';
 /** 基準要素 */
 export const ELEMENTS = Object.freeze(['rainsri', 'rainri', 'soil']);
 /** メッシュ名 */
