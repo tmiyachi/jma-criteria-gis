@@ -75,4 +75,4 @@ npm run start
 
 このデータの作成には気象庁公開のデータを利用しています．
 
-- [気象庁「特別警報の指標及び危険警報・警報・注意報発表基準一覧表」](https://www.data.jma.go.jp/developer/gis.html)のデータを加工して作成．
+- [気象庁「特別警報の指標及び危険警報・警報・注意報発表基準一覧表」](https://www.jma.go.jp/jma/kishou/know/kijun/index.html)のデータを加工して作成．
