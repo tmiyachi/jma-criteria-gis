@@ -76,7 +76,7 @@ export const OPTIONS = Object.freeze([
   { text: 'レベル5大雨特別警報の表面雨量指数基準値', value: 'rainsri,lv5' },
   { text: 'レベル2大雨注意報の流域雨量指数基準値', value: 'rainri,lv2' },
   {
-    text: 'レベル2大雨警報の流域雨量指数基準値（複合基準）',
+    text: 'レベル2大雨注意報の流域雨量指数基準値（複合基準）',
     value: 'rainri,lv3ri',
   },
   { text: 'レベル3大雨警報の流域雨量指数基準値', value: 'rainri,lv3' },
