@@ -52,18 +52,24 @@ def read_table(pref_name):
     # テーブルを読み込む
     df_1_1 = (
         pd.read_csv(
-            table_1_1_path, encoding="shift-jis", na_values=["-1", "－"], comment="#"
+            table_1_1_path,
+            encoding="shift-jis",
+            na_values=["-1", "－"],
+            comment="#",
+            usecols=NAMES_TABLE_1_1.keys(),
         )
         .rename(columns=NAMES_TABLE_1_1)  # カラム名変更
-        .loc[:, NAMES_TABLE_1_1.values()]  # 必要なカラムのみ選択
         .fillna(MISSING_VALUE)  # 未定義値をNaNから置き換え
     )
     df_1_3 = (
         pd.read_csv(
-            table_1_3_path, encoding="shift-jis", na_values=["-1", "－"], comment="#"
+            table_1_3_path,
+            encoding="shift-jis",
+            na_values=["-1", "－"],
+            comment="#",
+            usecols=NAMES_TABLE_1_3.keys(),
         )
         .rename(columns=NAMES_TABLE_1_3)
-        .loc[:, NAMES_TABLE_1_3.values()]
         .fillna(MISSING_VALUE)
     )
 
@@ -89,48 +95,39 @@ def make_geojson(mesh, pref_name, geojson_path):
     else:
         df = read_table(pref_name)
 
+    columnsExcluded = ["code", "ms3"]
     if mesh == "ms1":
-        df["ms1"] = df["ms3"].str[:4]
-        df = df.loc[:, [col for col in df.columns if col not in ["code", "ms3"]]]
-        df = (
-            df.replace({MISSING_VALUE: 9999})
-            .groupby("ms1")
-            .min()
-            .reset_index()
-            .replace({9999: MISSING_VALUE})
-        )
+        df[mesh] = df["ms3"].str[:4]
+        df = df.drop(columns=columnsExcluded)
         ms_to_polygon = ms1_to_polygon
     elif mesh == "ms2":
-        df["ms2"] = df["ms3"].str[:6]
-        df = df.loc[:, [col for col in df.columns if col not in ["code", "ms3"]]]
-        df = (
-            df.replace({MISSING_VALUE: 9999})
-            .groupby("ms2")
-            .min()
-            .reset_index()
-            .replace({9999: MISSING_VALUE})
-        )
+        df[mesh] = df["ms3"].str[:6]
+        df = df.drop(columns=columnsExcluded)
         ms_to_polygon = ms2_to_polygon
     elif mesh == "msjma5k":
-        df["msjma5k"] = df["ms3"].apply(ms3_to_msjma5k)
-        df = df.loc[:, [col for col in df.columns if col not in ["code", "ms3"]]]
-        df = (
-            df.replace({MISSING_VALUE: 9999})
-            .groupby("msjma5k")
-            .min()
-            .reset_index()
-            .replace({9999: MISSING_VALUE})
-        )
+        df[mesh] = df["ms3"].apply(ms3_to_msjma5k)
+        df = df.drop(columns=columnsExcluded)
         ms_to_polygon = msjma5k_to_polygon
     elif mesh == "ms3":
         ms_to_polygon = ms3_to_polygon
     else:
         raise ValueError(f"Unsupported mesh type: {mesh}")
 
+    # 各要素の最小値
+    df_min = (
+        df.replace({MISSING_VALUE: 99999})
+        .groupby(mesh)
+        .min()
+        .reset_index()
+        .replace({99999: MISSING_VALUE})
+    )
+
+    # 書き出し
     if not geojson_path.parent.exists():
         geojson_path.parent.mkdir(parents=True)
+    records = df_min.to_dict(orient="records")
     with open(geojson_path, "w") as f:
-        for _, row in df.iterrows():
+        for row in records:
             feature = {
                 "type": "Feature",
                 "geometry": {

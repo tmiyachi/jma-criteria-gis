@@ -2,6 +2,7 @@
 大雨警報の表面雨量指数基準値の格子メッシュgeojson(jsonl)データを作成する
 """
 
+from collections import defaultdict
 from datetime import datetime
 import json
 from pathlib import Path
@@ -47,6 +48,7 @@ BASE_DIR = Path(__file__).parent.parent
 TABLE_DIR = BASE_DIR / "table"
 GEOJSON_DIR = BASE_DIR / "geojson"
 JSON_DIR = BASE_DIR / "data"
+import time
 
 
 def read_table(pref_name):
@@ -58,21 +60,22 @@ def read_table(pref_name):
     if not table_1_4_path.exists():
         raise FileNotFoundError(f"File not found: {table_1_4_path.name}")
     # テーブルを読み込む
-    df_1_2 = (
-        pd.read_csv(
-            table_1_2_path, encoding="shift-jis", na_values=["-1", "－"], comment="#"
-        )
-        .rename(columns=NAMES_TABLE_1_2)  # カラム名変更
-        .loc[:, NAMES_TABLE_1_2.values()]  # 必要なカラムのみ選択
-    )
-    df_1_4 = (
-        pd.read_csv(
-            table_1_4_path, encoding="shift-jis", na_values=["-1", "－"], comment="#"
-        )
-        .rename(columns=NAMES_TABLE_1_4)
-        .loc[:, NAMES_TABLE_1_4.values()]
-        .fillna(MISSING_VALUE)
-    )
+    df_1_2 = pd.read_csv(
+        table_1_2_path,
+        encoding="shift-jis",
+        na_values=["-1", "－"],
+        comment="#",
+        usecols=NAMES_TABLE_1_2.keys(),
+    ).rename(
+        columns=NAMES_TABLE_1_2
+    )  # カラム名変更
+    df_1_4 = pd.read_csv(
+        table_1_4_path,
+        encoding="shift-jis",
+        na_values=["-1", "－"],
+        comment="#",
+        usecols=NAMES_TABLE_1_4.keys(),
+    ).rename(columns=NAMES_TABLE_1_4)
     # 河川名のない格子で格子番号が000で終わる格子は非流路格子、そうでない場合はN.D.とする
     # 配信資料に関する技術情報第 664 号: 計算対象河川が存在しない格子の指数値は、河川番号の下 3 桁を「000」として対応付けています
     df_1_2.loc[(df_1_2.rcode % 1000 == 0), "rname"] = "非流路格子"
@@ -97,17 +100,6 @@ def read_table(pref_name):
     return df_1_2
 
 
-def _make_agg_rules(df, by):
-    agg_rules = {col: "min" for col in df.columns if col not in [by]}
-    agg_rules["lv3sri"] = lambda x: df.at[df.loc[x.index, "lv3ri"].idxmin(), "lv3sri"]
-    agg_rules["lv2sri"] = lambda x: df.at[df.loc[x.index, "lv2ri"].idxmin(), "lv2sri"]
-    return agg_rules
-
-
-def _clean_dict(row):
-    return {k: v for k, v in row.items() if v != MISSING_VALUE and pd.notna(v)}
-
-
 def make_json():
     """府県予報区の基準値テーブルから、メッシュ単位で階層化したJSON形式で出力する"""
     # 全国分読む
@@ -118,19 +110,21 @@ def make_json():
 
     # ファイルサイズを小さくするため1次メッシュ単位で集約する
     df["ms1"] = df["ms3"].str[:4]
-    columns = [c for c in df.columns if c not in ["ms1", "ms3", "code"]]
+    columns = [c for c in df.columns if c not in ["ms1", "code"]]
     for ms1, df_ms1 in df.groupby("ms1"):
         # 各格子の基準をms3をキーとしたリストの辞書にまとめる
-        df_ms1["criteria"] = [
-            _clean_dict(row) for row in df_ms1[columns].to_dict(orient="records")
-        ]
-        result = df_ms1.groupby("ms3")["criteria"].apply(list).to_dict()
+        raw_records = df_ms1[columns].to_dict(orient="records")
+        result = defaultdict(list)
+        for row in raw_records:
+            result[row.pop("ms3")].append(
+                {k: v for k, v in row.items() if v != MISSING_VALUE}
+            )
 
         json_path = JSON_DIR / "rainri" / f"{ms1}.json"
         if not json_path.parent.exists():
             json_path.parent.mkdir(parents=True)
         with open(json_path, "w", encoding="utf-8") as file:
-            json.dump(result, file, ensure_ascii=False)
+            json.dump(dict(result), file, ensure_ascii=False)
 
 
 def make_geojson(mesh, pref_name, geojson_path):
@@ -145,54 +139,43 @@ def make_geojson(mesh, pref_name, geojson_path):
     # ただし、複合基準は流域雨量指数基準の最小値とし、表面雨量指数には流域雨量指数が最小となる格子の表面雨量指数基準値を格納する
     columnsExcluded = ["code", "ms3", "rname", "rcode"]
     if mesh == "ms1":
-        df["ms1"] = df["ms3"].str[:4]
-        df = df.loc[:, [col for col in df.columns if col not in columnsExcluded]]
-        df = (
-            df.replace({MISSING_VALUE: 9999})
-            .groupby("ms1")
-            .agg(_make_agg_rules(df, "ms1"))
-            .reset_index()
-            .replace({9999: MISSING_VALUE})
-        )
+        df[mesh] = df["ms3"].str[:4]
+        df = df.drop(columns=columnsExcluded)
         ms_to_polygon = ms1_to_polygon
     elif mesh == "ms2":
-        df["ms2"] = df["ms3"].str[:6]
-        df = df.loc[:, [col for col in df.columns if col not in columnsExcluded]]
-        df = (
-            df.replace({MISSING_VALUE: 9999})
-            .groupby("ms2")
-            .agg(_make_agg_rules(df, "ms2"))
-            .reset_index()
-            .replace({9999: MISSING_VALUE})
-        )
+        df[mesh] = df["ms3"].str[:6]
+        df = df.drop(columns=columnsExcluded)
         ms_to_polygon = ms2_to_polygon
     elif mesh == "msjma5k":
-        df["msjma5k"] = df["ms3"].apply(ms3_to_msjma5k)
-        df = df.loc[:, [col for col in df.columns if col not in columnsExcluded]]
-        df = (
-            df.replace({MISSING_VALUE: 9999})
-            .groupby("msjma5k")
-            .agg(_make_agg_rules(df, "msjma5k"))
-            .reset_index()
-            .replace({9999: MISSING_VALUE})
-        )
+        df[mesh] = df["ms3"].apply(ms3_to_msjma5k)
+        df = df.drop(columns=columnsExcluded)
         ms_to_polygon = msjma5k_to_polygon
     elif mesh == "ms3":
-        df = (
-            df.replace({MISSING_VALUE: 9999})
-            .groupby("ms3")
-            .agg(_make_agg_rules(df, "ms3"))
-            .reset_index()
-            .replace({9999: MISSING_VALUE})
-        )
         ms_to_polygon = ms3_to_polygon
     else:
         raise ValueError(f"Unsupported mesh type: {mesh}")
 
+    # 各要素の最小値
+    df_min = df.replace({MISSING_VALUE: 99999}).groupby(mesh).min()
+    # lv3sriと"lv2sriはそれぞれlv3riとlv3riが最小となる行の値とする
+    df_min["lv3sri"] = (
+        df.replace({MISSING_VALUE: 99999})
+        .sort_values([mesh, "lv3ri"])
+        .drop_duplicates(mesh)[[mesh, "lv3sri"]]
+    ).set_index(mesh)["lv3sri"]
+    df_min["lv2sri"] = (
+        df.replace({MISSING_VALUE: 99999})
+        .sort_values([mesh, "lv2ri"])
+        .drop_duplicates(mesh)[[mesh, "lv2sri"]]
+    ).set_index(mesh)["lv2sri"]
+    df_min = df_min.reset_index().replace({99999: MISSING_VALUE})
+
+    # 書き出し
     if not geojson_path.parent.exists():
         geojson_path.parent.mkdir(parents=True)
+    records = df_min.to_dict(orient="records")
     with open(geojson_path, "w") as f:
-        for _, row in df.iterrows():
+        for row in records:
             feature = {
                 "type": "Feature",
                 "geometry": {
