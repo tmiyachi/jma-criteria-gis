@@ -54,7 +54,7 @@ export const COLORS = Object.freeze([
 export const LEVELS = Object.freeze({
   rainsri: [0, 8, 12, 16, 24, 32, 40, 50, 60, 70],
   rainri: [0, 4, 8, 12, 16, 20, 40, 60, 200, 500],
-  soil: [0, 4500, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000],
+  soil: [0, 5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000],
 });
 /** ソース情報に表示するリンク */
 export const ATTRIBUTION = Object.freeze({
