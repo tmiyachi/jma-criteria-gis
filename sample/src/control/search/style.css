@@ -1,0 +1,43 @@
+.meshcode-ctrl {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 5px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+}
+
+.meshcode-ctrl input {
+  width: 120px;
+  padding: 4px 8px;
+  font-size: 14px;
+  outline: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.meshcode-ctrl input:focus {
+  border-color: #3887be;
+}
+
+.meshcode-ctrl button {
+  padding: 4px 8px;
+  font-size: 14px;
+  color: white;
+  cursor: pointer;
+  background: #3887be;
+  border: none;
+  border-radius: 4px;
+}
+
+.meshcode-ctrl button:hover {
+  background: #005f8d !important;
+}
+
+.meshcode-ctrl button:disabled {
+  color: #eceff1;
+  cursor: not-allowed !important;
+  background: #b0bec5;
+  opacity: 0.7;
+}

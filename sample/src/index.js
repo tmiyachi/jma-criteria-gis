@@ -4,11 +4,17 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import '@/main.css';
 
 import { initMap, setupLayers } from '@/map';
-import { LayerControl, DataViewerControl, LegendControl } from '@/control';
+import {
+  LayerControl,
+  DataViewerControl,
+  LegendControl,
+  SearchMeshControl,
+} from '@/control';
 import { loadJmaCode } from '@/service/jmaCodeService';
 import '@/control/dv/style.css';
 import '@/control/layer/style.css';
 import '@/control/legend/style.css';
+import '@/control/search/style.css';
 
 const protocol = new Protocol();
 maplibregl.addProtocol('pmtiles', protocol.tile);
@@ -29,9 +35,8 @@ const startApp = async () => {
       new maplibregl.AttributionControl({ compact: false }),
       'bottom-right',
     );
-    map.addControl(new maplibregl.ScaleControl(), 'bottom-left');
-    map.addControl(new maplibregl.NavigationControl(), 'bottom-left');
     map.addControl(new LegendControl(), 'bottom-right');
+    map.addControl(new SearchMeshControl(11), 'top-left');
     const layerControl = new LayerControl([
       { id: 'jmagis', label: '気象庁細分区' },
       { id: 'gsi-blank-layer', label: '地理院地図（白地図）' },
@@ -39,6 +44,7 @@ const startApp = async () => {
       { id: 'gsi-pale-layer', label: '地理院地図（淡色）' },
       { id: 'gsi-slopemap-layer', label: '地理院地図（地形）' },
     ]);
+    map.addControl(new maplibregl.NavigationControl(), 'top-left');
     map.addControl(layerControl, 'top-left');
     map.addControl(new DataViewerControl(), 'top-right');
   });
