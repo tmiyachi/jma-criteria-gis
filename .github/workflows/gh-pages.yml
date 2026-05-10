@@ -3,16 +3,20 @@ name: GitHub Pages
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
 
     permissions:
-      contents: write
+      contents: read
+      pages: write
+      id-token: write
 
     concurrency:
-      group: ${{ github.ref }}
+      group: "pages"
       cancel-in-progress: true
 
     steps:
@@ -22,8 +26,11 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "22"
           cache: "npm"
+
+      - name: Install Node dependencies
+        run: npm ci
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -42,7 +49,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: table/
-          key: table-2026-05-08-${{ hashFiles('scripts/00_download_csv.sh') }} # 基準値が更新されたらここを更新
+          key: table-2026-05-08-${{ hashFiles('scripts/00_download_csv.sh') }}
           restore-keys: |
             table-
 
@@ -51,17 +58,29 @@ jobs:
         run: scripts/00_download_csv.sh
         timeout-minutes: 30
 
+      - name: Cache Data and Tiles
+        id: cache-geodata
+        uses: actions/cache@v4
+        with:
+          path: |
+            data/
+            tiles/
+          key: geodata-${{ hashFiles('scripts/01_*', 'scripts/02_*', 'table/**/*.csv') }}
+          restore-keys: |
+            geodata-
+
       - name: Generate data
+        if: steps.cache-geodata.outputs.cache-hit != 'true'
         run: scripts/01_make_geojson.sh
+        timeout-minutes: 30
 
       - name: Generate tiles
-        run: |
-          scripts/02_make_tiles.sh
+        if: steps.cache-geodata.outputs.cache-hit != 'true'
+        run: scripts/02_make_tiles.sh
+        timeout-minutes: 30
 
       - name: Build demo pages
-        run: |
-          npm ci
-          npm run build
+        run: npm run build
         env:
           VITE_APP_BASE: /${{ github.event.repository.name }}/
 
@@ -72,9 +91,18 @@ jobs:
           cp tiles/*.pmtiles tiles/*.json sample/dist/tiles/
           cp -r data/* sample/dist/data/
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v4
-        if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./sample/dist
+          path: ./sample/dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
