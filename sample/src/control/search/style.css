@@ -30,14 +30,13 @@
   border: none;
   border-radius: 4px;
 }
-
-.meshcode-ctrl button:hover {
-  background: #005f8d !important;
-}
-
 .meshcode-ctrl button:disabled {
   color: #eceff1;
   cursor: not-allowed !important;
   background: #b0bec5;
   opacity: 0.7;
+}
+
+.meshcode-ctrl button:not(:disabled):hover {
+  background: #005f8d !important;
 }
