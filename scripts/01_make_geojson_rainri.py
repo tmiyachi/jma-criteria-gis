@@ -89,8 +89,11 @@ def read_table(pref_name):
     # 未定義値をNaNから置き換え
     df_1_2 = df_1_2.fillna(MISSING_VALUE)
 
-    # Lv4危険警報基準値（別表1-4に記載のない格子はLv4基準はあるが危険警報の発表対象外なので未定義値にする）
-    s = df_1_2["lv4"].where(df_1_2["ms3"].isin(df_1_4["ms3"]), MISSING_VALUE)
+    # Lv4危険警報基準値（別表1-4に記載のない格子と河川番号のペアはLv4基準はあるが危険警報の発表対象外なので未定義値にする）
+    mask = df_1_2.set_index(["code", "ms3", "rcode"]).index.isin(
+        df_1_4.set_index(["code", "ms3", "rcode"]).index
+    )
+    s = df_1_2["lv4"].where(mask, MISSING_VALUE)
     df_1_2.insert(df_1_2.columns.get_loc("lv4") + 1, "lv4u", s)
 
     # コード番号は文字列型に変換
