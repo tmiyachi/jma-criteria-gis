@@ -17,10 +17,12 @@ export class DataViewerControl {
     this.state = { elem: null, level: null };
     // マウスの状態
     this.isDragging = false;
-
+    // 情報パネル表示の遅延実行
     this.debouncedRenderDetails = debounce((props) => {
       this.renderDetails(props);
     }, 50);
+    // データ取得ID管理
+    this.requestId = 0;
   }
 
   onAdd(map) {
@@ -170,19 +172,22 @@ export class DataViewerControl {
     const { elem, level } = this.state;
     const color = colorExpression(elem, level);
 
-    this.managedLayers.forEach((layerId) => {
-      if (!this.map.getLayer(layerId)) return;
-      const isTarget = layerId.startsWith(`elem-${elem}`);
+    this.managedLayers
+      // 選択した要素レイヤーを先にvisibleにしてから前のレイヤーを非表示にするためにソート
+      .toSorted((layerId) => layerId.startsWith(`elem-${elem}`))
+      .forEach((layerId) => {
+        if (!this.map.getLayer(layerId)) return;
+        const isTarget = layerId.startsWith(`elem-${elem}`);
 
-      this.map.setLayoutProperty(
-        layerId,
-        'visibility',
-        isTarget ? 'visible' : 'none',
-      );
-      if (isTarget) {
-        this.map.setPaintProperty(layerId, 'fill-color', color);
-      }
-    });
+        this.map.setLayoutProperty(
+          layerId,
+          'visibility',
+          isTarget ? 'visible' : 'none',
+        );
+        if (isTarget) {
+          this.map.setPaintProperty(layerId, 'fill-color', color);
+        }
+      });
   }
 
   onMouseMove(e) {
@@ -280,21 +285,22 @@ export class DataViewerControl {
 
   // 詳細情報パネルの更新
   async renderDetails(props) {
+    const requestId = ++this.requestId;
+
     if (!props) {
       this.featureDetails.textContent = 'Hover over on a grid';
       this.chart.update(null);
       return;
     }
 
-    const targetMesh = props.ms3 || props.msjma5k || props.ms2; // 対象の格子
     const { elem, level } = this.state;
 
     let html = createBasicTable(props, elem, level);
     if (elem === 'rainri' && props.ms3) {
       // 流域雨量指数基準の場合は1格子に複数基準があるのでタイルに格納できない。分離した格子単位のデータを取得して全河川分表示。
-      const criteria = await fetchRainRiMs3(props.ms3);
-      // データ取得中に表示対象の格子が変わっていたら中止
-      if (targetMesh !== this.getCurrentHoverMesh()) return;
+      const criteria = (await fetchRainRiMs3(props.ms3)) || [];
+      // データ取得中に次の表示リクエストが来ていたら中止
+      if (requestId !== this.requestId) return;
       html += '<hr>';
       html += criteria.map((d) => createDetailTable(elem, d)).join('<hr>');
     } else {
@@ -305,22 +311,12 @@ export class DataViewerControl {
       // 土砂の場合はグラフ更新
       if (elem == 'soil') {
         const criteria = await fetchSoilMs3(props.ms3);
-        // 土砂のデータ取得中に表示対象の格子が変わっていたら中止
-        if (targetMesh !== this.getCurrentHoverMesh()) {
-          return;
-        }
+        // データ取得中に次の表示リクエストが来ていたら中止
+        if (requestId !== this.requestId) return;
         this.chart.update(criteria);
       }
     }
     this.featureDetails.innerHTML = html;
-  }
-
-  getCurrentHoverMesh() {
-    return (
-      this.currentHoverProps?.ms3 ||
-      this.currentHoverProps?.msjma5k ||
-      this.currentHoverProps?.ms2
-    );
   }
 }
 

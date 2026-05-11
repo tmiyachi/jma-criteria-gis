@@ -8,10 +8,12 @@ const meshCache = new Map();
 const pendingRequests = new Map();
 
 /**
- * 3次メッシュ格子の流域雨量指数基準を取得
+ * 3次メッシュ格子の土壌雨量指数基準を取得
+ * @param {string} ms3
+ * @returns {Promise<Object[] | undefined>}
  */
 export const fetchSoilMs3 = async (ms3) => {
-  if (!ms3) return null;
+  if (!ms3) return undefined;
   const ms1 = ms3.slice(0, 4); // 一次メッシュ単位で分割
 
   if (meshCache.has(ms1)) {
@@ -22,9 +24,9 @@ export const fetchSoilMs3 = async (ms3) => {
     return data.get(ms3);
   }
 
-  // リクエスト中
+  // 同じms1がリクエスト中ならその結果を待って取得
   if (pendingRequests.has(ms1)) {
-    return pendingRequests.get(ms1);
+    return pendingRequests.get(ms1).then((data) => data.get(ms3));
   }
 
   const url = `${CRITERIA_HOST}data/soil/${ms1}.json`;
@@ -43,15 +45,15 @@ export const fetchSoilMs3 = async (ms3) => {
         meshCache.delete(oldestKey);
         console.debug(`Cache cleared: ${oldestKey}`);
       }
-      return data.get(ms3);
+      return data;
     } catch (e) {
       console.error(e);
-      return null;
+      return new Map();
     } finally {
       pendingRequests.delete(ms1); // 完了
     }
   })();
 
   pendingRequests.set(ms1, requestPromise);
-  return requestPromise;
+  return requestPromise.then((data) => data.get(ms3));
 };
