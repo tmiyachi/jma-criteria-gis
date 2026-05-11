@@ -34,3 +34,10 @@ body {
 .font-bold {
   font-weight: 700;
 }
+/** bottom-leftに配置したコントロールがtop-rightに配置する情報パネルより下側になるように調整 */
+.maplibregl-ctrl-top-right {
+  z-index: 10;
+}
+.maplibregl-ctrl-bottom-left {
+  z-index: 1;
+}
