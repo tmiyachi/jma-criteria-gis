@@ -48,7 +48,6 @@ BASE_DIR = Path(__file__).parent.parent
 TABLE_DIR = BASE_DIR / "table"
 GEOJSON_DIR = BASE_DIR / "geojson"
 JSON_DIR = BASE_DIR / "data"
-import time
 
 
 def read_table(pref_name):
