@@ -16,7 +16,7 @@ export const loadJmaCode = async () => {
 
   loadPromise = (async () => {
     try {
-      const url = `${GIS_HOST}/jmacode/jmacode.csv`;
+      const url = `${GIS_HOST}jmacode/jmacode.csv`;
       const csvText = await (await fetch(url)).text();
       const [headerLine, ...dataLines] = csvText.trim().split(/\r?\n/);
       const headers = headerLine.split(',').map((h) => h.trim());

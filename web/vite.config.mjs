@@ -48,9 +48,7 @@ export default defineConfig(({ mode }) => {
     },
 
     define: {
-      JMA_GIS_HOST: JSON.stringify(
-        'https://raw.githubusercontent.com/tmiyachi/jma-gis/master',
-      ),
+      JMA_GIS_HOST: JSON.stringify('https://tmiyachi.github.io/jma-gis/'),
     },
   };
 });

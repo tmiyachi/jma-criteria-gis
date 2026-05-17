@@ -48,7 +48,7 @@ export const setupLayers = async (map) => {
 export const setupJmaGisLayers = (map) => {
   map.addSource('jmagis', {
     type: 'vector',
-    tiles: [`${GIS_HOST}/tiles/zxy/{z}/{x}/{y}.pbf`],
+    url: `pmtiles://${GIS_HOST}tiles/jma-gis.pmtiles`,
     attribution: ATTRIBUTION.jmagis,
   });
   map.addLayer({
@@ -61,6 +61,7 @@ export const setupJmaGisLayers = (map) => {
       'line-color': '#627BC1',
       'line-opacity': 0.5,
     },
+    minzoom: 8,
   });
   map.addLayer({
     id: 'matomearea-lines',
@@ -72,6 +73,7 @@ export const setupJmaGisLayers = (map) => {
       'line-color': '#627BC1',
       'line-opacity': 0.8,
     },
+    minzoom: 7,
   });
   map.addLayer({
     id: 'firstarea-lines',
