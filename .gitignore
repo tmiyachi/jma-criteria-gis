@@ -9,4 +9,4 @@ node_modules/
 
 .vscode/
 
-sample/dist
+web/dist

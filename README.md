@@ -63,7 +63,7 @@ csvテーブル表から geojson（jsonl） ファイルを作成する．
 ./02_make_tiles.sh
 ```
 
-## Sample
+## Demo
 
 ```
 # ./
@@ -71,7 +71,7 @@ npm run start
 
 ```
 
-## Refference
+## Reference
 
 このデータの作成には気象庁公開のデータを利用しています．
 
