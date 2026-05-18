@@ -202,13 +202,19 @@ export class DataViewerControl {
         id: feature.id,
       };
 
-      this.map.setFeatureState(this.hoveredState, { hover: true });
       if (!this.isDragging) {
-        this.map.getCanvas().style.cursor = 'pointer';
+        if (this.selectedState?.id == feature.id) {
+          this.map.getCanvas().style.cursor = 'pointer';
+        } else {
+          this.map.getCanvas().style.cursor = this.selectedState
+            ? ''
+            : 'pointer';
+        }
       }
 
       this.currentHoverProps = feature.properties; // プロパティを保持
       if (!this.selectedState) {
+        this.map.setFeatureState(this.hoveredState, { hover: true });
         this.debouncedRenderDetails(this.currentHoverProps);
       }
     }
