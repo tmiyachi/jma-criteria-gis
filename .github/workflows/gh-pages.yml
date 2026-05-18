@@ -82,6 +82,7 @@ jobs:
       - name: Build demo pages
         run: npm run build
         env:
+          VITE_JMA_GIS_HOST: https://tmiyachi.github.io/jma-gis/
           VITE_APP_BASE: /${{ github.event.repository.name }}/
 
       - name: Copy data and tiles

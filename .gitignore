@@ -8,5 +8,3 @@ venv/
 node_modules/
 
 .vscode/
-
-web/dist

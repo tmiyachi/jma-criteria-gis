@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 export default defineConfig(({ mode }) => {
   return {
     root: path.resolve(__dirname, 'src'),
+    envDir: __dirname,
     base: './',
     publicDir:
       mode === 'production'
@@ -45,10 +46,6 @@ export default defineConfig(({ mode }) => {
       fs: {
         allow: ['.', '../tiles', '../data'],
       },
-    },
-
-    define: {
-      JMA_GIS_HOST: JSON.stringify('https://tmiyachi.github.io/jma-gis/'),
     },
   };
 });
