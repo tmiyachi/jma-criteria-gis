@@ -23,7 +23,7 @@ function download_csv() {
         # 大東島には土砂災害基準テーブルがない
         continue
       fi
-      url="https://www.jma.go.jp/jma/kishou/know/kijun_new/${pref}/${prefix}_${pref}.csv"
+      url="https://www.jma.go.jp/jma/kishou/know/kijun/${pref}/${prefix}_${pref}.csv"
       echo $url
     done
   )
